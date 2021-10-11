@@ -7,13 +7,14 @@ namespace Quoridor
     {
         public static Wall ActiveWall;
         
-        private bool IsSelected;
+        private bool isSelected;
         private Point defaultPosition;
         private Size defaultSize;
         private Size selectedSize;
 
         private bool rotationLocked;
-        private bool isPlaced;
+        public bool IsPlaced { get; private set; }
+
         public Wall(int x, int y, int width, int height) : base(x, y, width, height, true)
         {
             PrimaryBrush = Brushes.DarkRed;
@@ -25,20 +26,20 @@ namespace Quoridor
 
         public new void Update()
         {
-            if ((ActiveWall != null && ActiveWall != this) || isPlaced) return;
+            if ((ActiveWall != null && ActiveWall != this) || IsPlaced) return;
             
             if (Input.IsMouseButtonDown(MouseButtons.Left) && ContainsPoint(Input.MousePosition))
             {
-                IsSelected = true;
+                isSelected = true;
                 ActiveWall = this;
             }
             if (!Input.IsMouseButtonDown(MouseButtons.Left))
             {
-                IsSelected = false;
+                isSelected = false;
                 ActiveWall = null;
             }
 
-            if (IsSelected)
+            if (isSelected)
             {
                 Position = Input.MousePosition;
                 Size = selectedSize;
@@ -48,7 +49,7 @@ namespace Quoridor
                     Position = defaultPosition;
                     Size = defaultSize;
                     selectedSize = new Size(Size.Width + 30, Size.Height);
-                    IsSelected = false;
+                    isSelected = false;
                     ActiveWall = null;
                 }
                 
@@ -64,7 +65,11 @@ namespace Quoridor
             }
             else
             {
-                if (Position != defaultPosition) isPlaced = true;
+                if (Position != defaultPosition)
+                {
+                    IsPlaced = true;
+                    PrimaryBrush = HoverBrush;
+                }
             }
             
             if (!Input.IsKeyDown(Keys.R)) rotationLocked = false;
@@ -76,6 +81,16 @@ namespace Quoridor
                 g.FillRectangle(HoverBrush, Position.X, Position.Y, Size.Width, Size.Height);
             else 
                 base.Draw(g);
+        }
+
+        public bool IsHorizontal()
+        {
+            return Size.Width > Size.Height;
+        }
+        
+        public bool IsVertical()
+        {
+            return Size.Width < Size.Height;
         }
     }
 }

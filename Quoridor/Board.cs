@@ -11,11 +11,12 @@ namespace Quoridor
         private const int OFFSET = 10;
         private const int WIDTH = 11;
         private const int HEIGHT = 9;
-        
-        private readonly Cell[] cells = new Cell[99];
+
+        private readonly Cell[,] cells = new Cell[11, 9];
         private readonly Wall[] walls = new Wall[20];
-        private readonly Point[] anchorPoints = new Point[81];
-        private readonly List<Point> takenPoints = new List<Point>();
+        private readonly Point[,] anchorPoints = new Point[9,9];
+        private readonly List<Point> bannedPointsV = new List<Point>();
+        private readonly List<Point> bannedPointsH = new List<Point>();
 
         private Size Size;
         private Point Location;
@@ -46,66 +47,68 @@ namespace Quoridor
             {
                 foreach (Wall w in walls)
                 {
-                    int count = 0;
-                    foreach (Point p in anchorPoints)
+                    if (!w.IsPlaced) continue;
+                    if (w.IsHorizontal())
                     {
-                        Point temp = new Point(p.X + 1, p.Y + 1);
-                        if (w.ContainsPoint(temp) && count != 2 && !takenPoints.Contains(p))
+                        void BanPointsH()
                         {
-                            takenPoints.Add(p);
-                            count++;
+                            for (int i = 0; i < 9; i++)
+                            {
+                                for (int j = 0; j < 9; j++)
+                                {
+                                    Point p = anchorPoints[i, j];
+                                    if (p != w.Position) continue;
+                                    if (!bannedPointsH.Contains(anchorPoints[i, j])) bannedPointsH.Add(anchorPoints[i, j]);
+                                    if (!bannedPointsH.Contains(anchorPoints[i + 1, j]))bannedPointsH.Add(anchorPoints[i + 1, j]);
+                                    if (i != 0)
+                                        if (!bannedPointsH.Contains(anchorPoints[i - 1, j]))
+                                            bannedPointsH.Add(anchorPoints[i - 1, j]);
+                                    if (!bannedPointsV.Contains(anchorPoints[i + 1, j - 1])) 
+                                        bannedPointsV.Add(anchorPoints[i + 1, j - 1]);
+                                    return;
+                                }
+                            }
                         }
+                        BanPointsH();
+                    }
+                    else
+                    {
+                        void BanPointsV()
+                        {
+                            for (int i = 0; i < 9; i++)
+                            {
+                                for (int j = 0; j < 9; j++)
+                                {
+                                    Point p = anchorPoints[i, j];
+                                    if (p != w.Position) continue;
+                                    if (!bannedPointsV.Contains(anchorPoints[i, j])) bannedPointsV.Add(anchorPoints[i, j]);
+                                    if (!bannedPointsV.Contains(anchorPoints[i, j + 1]))bannedPointsV.Add(anchorPoints[i, j + 1]);
+                                    if (j != 0) if (!bannedPointsV.Contains(anchorPoints[i, j - 1])) bannedPointsV.Add(anchorPoints[i, j - 1]);
+                                    if (!bannedPointsH.Contains(anchorPoints[i - 1, j + 1])) bannedPointsH.Add(anchorPoints[i - 1, j + 1]);
+                                    return;
+                                }
+                            }
+                        }
+                        BanPointsV();
                     }
                 }
                 return;
             }
             
-            if (Wall.ActiveWall.Size.Width > Wall.ActiveWall.Size.Height)
+            if (Wall.ActiveWall.IsHorizontal())
             {
                 Point point = FindClosestHorizontal();
-                /*bool isTaken = false;
-                foreach (Wall w in walls)
-                {
-                    Point temp = new Point(point.X + 1, point.Y + 1);
-                    if (!w.ContainsPoint(temp)) continue;
-                    isTaken = true;
-                    break;
-                }*/
-
-                if (!takenPoints.Contains(point))
+                if (!bannedPointsH.Contains(point))
                 {
                     Wall.ActiveWall.Position = point;
-                    /*int count = 0;
-                    foreach (Point p in anchorPoints)
-                    {
-                        Point temp = new Point(p.X + 1, p.Y + 1);
-                        if (Wall.ActiveWall.ContainsPoint(temp) && count != 2)
-                        {
-                            takenPoints.Add(p);
-                            count++;
-                        }
-                    }*/
                 }
             }
             else
             {
-                Wall.ActiveWall.Position = FindClosestVertical();
-            }
-
-            if (Wall.ActiveWall == null)
-            {
-                foreach (Wall w in walls)
+                Point point = FindClosestVertical();
+                if (!bannedPointsV.Contains(point))
                 {
-                    int count = 0;
-                    foreach (Point p in anchorPoints)
-                    {
-                        Point temp = new Point(p.X + 1, p.Y + 1);
-                        if (Wall.ActiveWall.ContainsPoint(temp) && count != 2)
-                        {
-                            takenPoints.Add(p);
-                            count++;
-                        }
-                    }
+                    Wall.ActiveWall.Position = point;
                 }
             }
         }
@@ -131,13 +134,13 @@ namespace Quoridor
                     switch (i)
                     {
                         case 0:
-                            cells[i + j * 11] = new Cell(i * CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE * 2, CELL_SIDE, false);
+                            cells[i,j] = new Cell(i * CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE * 2, CELL_SIDE, false);
                             break;
                         case 10:
-                            cells[i + j * 11] = new Cell(i * CELL_SIDE + CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE * 2, CELL_SIDE, false);
+                            cells[i,j] = new Cell(i * CELL_SIDE + CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE * 2, CELL_SIDE, false);
                             break;
                         default:
-                            cells[i + j * 11] = new Cell(i * CELL_SIDE + CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE, CELL_SIDE, true);
+                            cells[i,j] = new Cell(i * CELL_SIDE + CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE, CELL_SIDE, true);
                             break;
                     }
                 }
@@ -152,28 +155,16 @@ namespace Quoridor
                 walls[i + 10] = new Wall(Location.X + CELL_SIDE * 11 + OFFSET * 10, i * CELL_SIDE + i * OFFSET + Location.Y - 10, CELL_SIDE * 2, 10);
             }
         }
-
+        
         private void CreateAnchorPoints()
         {
-            int off = 0;
-            int index = 0;
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 9; i++)
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    int idx = j + i * 10 + off;
-                    Cell c = cells[idx];
-                    if (i == 0)
-                    {
-                        anchorPoints[index] = new Point(c.Position.X + c.Size.Width, c.Position.Y - 10);
-                        anchorPoints[index + 9] = new Point(c.Position.X + c.Size.Width, c.Position.Y + c.Size.Height);
-                    }
-                    else
-                        anchorPoints[index + 9] = new Point(c.Position.X + c.Size.Width, c.Position.Y + c.Size.Height);
-                    index++;
+                    Cell c = cells[i, j];
+                    anchorPoints[i, j] = new Point(c.Position.X + c.Size.Width, c.Position.Y - 10);
                 }
-
-                off += 1;
             }
         }
 
@@ -187,18 +178,14 @@ namespace Quoridor
         private Point FindClosestHorizontal()
         {
             Point closest = new Point(int.MaxValue, int.MaxValue);
-            int offset = 1;
-            for (int i = 0; i < anchorPoints.Length; i++)
+            for (int i = 0; i < 8; i++)
             {
-                if (i < 9) continue;
-                if (i == 8 + offset * 9)
+                for (int j = 1; j < 9; j++)
                 {
-                    offset++;
-                    continue;
+                    Point p = anchorPoints[i, j];
+                    if (DistSquared(Input.MousePosition, p) < DistSquared(Input.MousePosition, closest))
+                        closest = p;
                 }
-                Point point = anchorPoints[i];
-                if (DistSquared(Input.MousePosition, point) < DistSquared(Input.MousePosition, closest))
-                    closest = point;
             }
 
             return closest;
@@ -207,19 +194,14 @@ namespace Quoridor
         private Point FindClosestVertical()
         {
             Point closest = new Point(int.MaxValue, int.MaxValue);
-            int offset = 0;
-            for (int i = 0; i < anchorPoints.Length; i++)
+            for (int i = 1; i < 9; i++)
             {
-                /*if (i < 9 /*|| i == 7 + offset * 9#1#) continue;*/
-                if (i == 0 || i > 81 - 9) continue;
-                if (i == 9 + offset * 9)
+                for (int j = 0; j < 8; j++)
                 {
-                    offset++;
-                    continue;
+                    Point p = anchorPoints[i, j];
+                    if (DistSquared(Input.MousePosition, p) < DistSquared(Input.MousePosition, closest))
+                        closest = p;
                 }
-                Point point = anchorPoints[i];
-                if (DistSquared(Input.MousePosition, point) < DistSquared(Input.MousePosition, closest))
-                    closest = point;
             }
 
             return closest;
