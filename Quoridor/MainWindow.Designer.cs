@@ -39,7 +39,7 @@ namespace Quoridor
             // UpdateTimer
             // 
             this.GameTimer.Enabled = true;
-            this.GameTimer.Interval = 50D;
+            this.GameTimer.Interval = 70D;
             this.GameTimer.SynchronizingObject = this;
             this.GameTimer.Elapsed += new System.Timers.ElapsedEventHandler(this.OnGameTimerTick);
             // 

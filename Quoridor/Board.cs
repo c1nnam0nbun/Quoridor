@@ -20,6 +20,8 @@ namespace Quoridor
 
         private Size Size;
         private Point Location;
+
+        private Player player;
         
         public Board(Form form)
         {
@@ -37,11 +39,12 @@ namespace Quoridor
             CreateCells();
             CreateWalls();
             CreateAnchorPoints();
+
+            player = new Player(cells[1, 0]);
         }
 
         public void Update()
         {
-            foreach (Cell cell in cells) cell.Update();
             foreach (Wall wall in walls) wall.Update();
             if (Wall.ActiveWall == null)
             {
@@ -59,12 +62,16 @@ namespace Quoridor
                                     Point p = anchorPoints[i, j];
                                     if (p != w.Position) continue;
                                     if (!bannedPointsH.Contains(anchorPoints[i, j])) bannedPointsH.Add(anchorPoints[i, j]);
-                                    if (!bannedPointsH.Contains(anchorPoints[i + 1, j]))bannedPointsH.Add(anchorPoints[i + 1, j]);
-                                    if (i != 0)
-                                        if (!bannedPointsH.Contains(anchorPoints[i - 1, j]))
+                                    if (!bannedPointsH.Contains(anchorPoints[i + 1, j])) bannedPointsH.Add(anchorPoints[i + 1, j]);
+                                    if (i != 0 && !bannedPointsH.Contains(anchorPoints[i - 1, j]))
                                             bannedPointsH.Add(anchorPoints[i - 1, j]);
                                     if (!bannedPointsV.Contains(anchorPoints[i + 1, j - 1])) 
                                         bannedPointsV.Add(anchorPoints[i + 1, j - 1]);
+                                    
+                                    cells[i+1,j].RemoveNeighbour(cells[i+1,j-1]);
+                                    cells[i+1,j-1].RemoveNeighbour(cells[i+1,j]);
+                                    cells[i+2,j].RemoveNeighbour(cells[i+2,j-1]);
+                                    cells[i+2,j-1].RemoveNeighbour(cells[i+2,j]);
                                     return;
                                 }
                             }
@@ -83,8 +90,13 @@ namespace Quoridor
                                     if (p != w.Position) continue;
                                     if (!bannedPointsV.Contains(anchorPoints[i, j])) bannedPointsV.Add(anchorPoints[i, j]);
                                     if (!bannedPointsV.Contains(anchorPoints[i, j + 1]))bannedPointsV.Add(anchorPoints[i, j + 1]);
-                                    if (j != 0) if (!bannedPointsV.Contains(anchorPoints[i, j - 1])) bannedPointsV.Add(anchorPoints[i, j - 1]);
+                                    if (j != 0 && !bannedPointsV.Contains(anchorPoints[i, j - 1])) bannedPointsV.Add(anchorPoints[i, j - 1]);
                                     if (!bannedPointsH.Contains(anchorPoints[i - 1, j + 1])) bannedPointsH.Add(anchorPoints[i - 1, j + 1]);
+                                    
+                                    cells[i,j].RemoveNeighbour(cells[i+1,j]);
+                                    cells[i+1,j].RemoveNeighbour(cells[i,j]);
+                                    cells[i,j+1].RemoveNeighbour(cells[i+1,j+1]);
+                                    cells[i+1,j+1].RemoveNeighbour(cells[i,j+1]);
                                     return;
                                 }
                             }
@@ -92,23 +104,37 @@ namespace Quoridor
                         BanPointsV();
                     }
                 }
-                return;
-            }
-            
-            if (Wall.ActiveWall.IsHorizontal())
-            {
-                Point point = FindClosestHorizontal();
-                if (!bannedPointsH.Contains(point))
+
+                for (int i = 0; i < 11; i++)
                 {
-                    Wall.ActiveWall.Position = point;
+                    for (int j = 0; j < 9; j++)
+                    {
+                        Cell cell = cells[i, j];
+                        if (!cell.IsPlayable) break;
+                        if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
+                        {
+                            player.Move(cell);
+                        }
+                    }
                 }
             }
             else
             {
-                Point point = FindClosestVertical();
-                if (!bannedPointsV.Contains(point))
+                if (Wall.ActiveWall.IsHorizontal())
                 {
-                    Wall.ActiveWall.Position = point;
+                    Point point = FindClosestHorizontal();
+                    if (!bannedPointsH.Contains(point))
+                    {
+                        Wall.ActiveWall.Position = point;
+                    }
+                }
+                else
+                {
+                    Point point = FindClosestVertical();
+                    if (!bannedPointsV.Contains(point))
+                    {
+                        Wall.ActiveWall.Position = point;
+                    }
                 }
             }
         }
@@ -123,6 +149,7 @@ namespace Quoridor
                 g.FillEllipse(Brushes.White, point.X, point.Y, 10, 10);
             }
             foreach (Wall wall in walls) wall?.Draw(g);
+            player.Draw(g);
         }
 
         private void CreateCells()
@@ -143,6 +170,18 @@ namespace Quoridor
                             cells[i,j] = new Cell(i * CELL_SIDE + CELL_SIDE + i * OFFSET + Location.X, j * CELL_SIDE + j * OFFSET + Location.Y, CELL_SIDE, CELL_SIDE, true);
                             break;
                     }
+                }
+            }
+
+            for (int i = 0; i < 11; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Cell cell = cells[i, j];
+                    if (i > 0) cell.AddNeighbour(cells[i-1, j]);
+                    if (i < 10) cell.AddNeighbour(cells[i+1, j]); 
+                    if (j > 0) cell.AddNeighbour(cells[i, j-1]);
+                    if (j < 8) cell.AddNeighbour(cells[i, j+1]);
                 }
             }
         }

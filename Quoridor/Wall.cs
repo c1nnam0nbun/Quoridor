@@ -24,7 +24,7 @@ namespace Quoridor
             selectedSize = new Size(Size.Width + 30, Size.Height);
         }
 
-        public new void Update()
+        public void Update()
         {
             if ((ActiveWall != null && ActiveWall != this) || IsPlaced) return;
             

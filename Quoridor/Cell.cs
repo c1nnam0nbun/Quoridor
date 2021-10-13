@@ -1,13 +1,16 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Quoridor
 {
     public class Cell
     {
-        public bool IsPlayable { get; protected set;  }
+        public bool IsPlayable { get; set; }
         public Point Position { get; set; }
         public Size Size { get; protected set; }
+
+        private List<Cell> neighbours = new List<Cell>();
 
         protected Brush PrimaryBrush = Brushes.BurlyWood;
         protected Brush HoverBrush = Brushes.SandyBrown;
@@ -24,13 +27,19 @@ namespace Quoridor
             return point.X > Position.X && point.Y > Position.Y && point.X < Position.X + Size.Width && point.Y < Position.Y + Size.Height;
         }
 
-        public void Update()
+        public void AddNeighbour(Cell neighbour)
         {
-            if (!IsPlayable) return;
-            if (ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
-            {
-                
-            }
+            neighbours.Add(neighbour);
+        }
+        
+        public void RemoveNeighbour(Cell neighbour)
+        {
+            neighbours.Remove(neighbour);
+        }
+
+        public bool HasNeighbour(Cell cell)
+        {
+            return neighbours.Contains(cell);
         }
 
         public void Draw(Graphics g)
