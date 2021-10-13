@@ -6,23 +6,23 @@ namespace Quoridor
 {
     public partial class MainWindow : Form
     {
-        private readonly Board board;
         public MainWindow()
         {
             InitializeComponent();
-            board = new Board(this);
             BackColor = Color.Bisque;
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            GameManager.Init(this);
         }
         
         private void OnPaint(object sender, PaintEventArgs e)
         {
-            board.Draw(e.Graphics);
+            GameManager.GameDraw(e.Graphics);
+            GameManager.GameStart(e.Graphics);
         }
         
         private void OnGameTimerTick(object sender, ElapsedEventArgs e)
         {
-            board?.Update();
+            GameManager.GameUpdate();
             Refresh();
         }
     }
