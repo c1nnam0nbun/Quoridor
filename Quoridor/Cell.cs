@@ -14,12 +14,11 @@ namespace Quoridor
 
         public Action<Cell> PressCallback { get; set; }
 
-        private List<Cell> neighbours = new List<Cell>();
-        private bool ShouldReceiveInput = true;
-        public bool IsTaken = false;
+        private List<Cell> Neighbours { get; } = new List<Cell>();
+        public bool IsTaken { get; set; }
 
-        private Brush PrimaryBrush = Brushes.BurlyWood;
-        private Brush HoverBrush = Brushes.SandyBrown;
+        private Brush PrimaryBrush { get; } = Brushes.BurlyWood;
+        private Brush HoverBrush { get; } = Brushes.SandyBrown;
 
         public Cell(int x, int y, int width, int height, bool isPlayable)
         {
@@ -40,7 +39,6 @@ namespace Quoridor
             if (ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
             {
                 PressCallback?.Invoke(this);
-                ShouldReceiveInput = false;
             }
 
             //if (!Input.IsMouseButtonDown(MouseButtons.Left)) ShouldReceiveInput = true;
@@ -53,17 +51,17 @@ namespace Quoridor
 
         public void AddNeighbour(Cell neighbour)
         {
-            neighbours.Add(neighbour);
+            Neighbours.Add(neighbour);
         }
         
         public void RemoveNeighbour(Cell neighbour)
         {
-            neighbours.Remove(neighbour);
+            Neighbours.Remove(neighbour);
         }
 
         public bool HasNeighbour(Cell cell)
         {
-            return neighbours.Contains(cell);
+            return Neighbours.Contains(cell);
         }
 
         public void Draw(Graphics g)

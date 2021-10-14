@@ -4,28 +4,28 @@ namespace Quoridor
 {
     public class Player
     {
-        public Cell currentCell;
-        private Brush brush;
+        public Cell CurrentCell { get; private set; }
+        private Brush Brush { get; }
         public Wall[] Walls { get; } = new Wall[10];
 
         public Player(Cell initialCell, Brush brush)
         {
-            currentCell = initialCell;
-            currentCell.IsTaken = true;
-            this.brush = brush;
+            CurrentCell = initialCell;
+            CurrentCell.IsTaken = true;
+            this.Brush = brush;
         }
 
         public void Draw(Graphics g)
         {
-            g.FillEllipse(brush, currentCell.Position.X, currentCell.Position.Y, currentCell.Size.Width, currentCell.Size.Height);
+            g.FillEllipse(Brush, CurrentCell.Position.X, CurrentCell.Position.Y, CurrentCell.Size.Width, CurrentCell.Size.Height);
         }
 
         public bool Move(Cell cell)
         {
-            if (!currentCell.HasNeighbour(cell) || cell.IsTaken) return false;
-            currentCell.IsTaken = false;
+            if (!CurrentCell.HasNeighbour(cell) || cell.IsTaken) return false;
+            CurrentCell.IsTaken = false;
             cell.IsTaken = true;
-            currentCell = cell;
+            CurrentCell = cell;
             return true;
         }
     }
