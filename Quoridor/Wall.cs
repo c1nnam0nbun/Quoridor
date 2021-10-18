@@ -18,7 +18,7 @@ namespace Quoridor
         public Point Position { get; set; }
         private Size Size { get; set; }
 
-        private Action<Wall> placedCallback;
+        private Action<Wall> PlacedCallback { get; }
 
         private Brush PrimaryBrush { get; set; } = Brushes.DarkRed;
         private Brush HoverBrush { get; set; } = Brushes.Crimson;
@@ -34,7 +34,7 @@ namespace Quoridor
 
         public Wall(Action<Wall> placedCallback)
         {
-            this.placedCallback = placedCallback;
+            this.PlacedCallback = placedCallback;
         }
 
         public void SetDefaultPosition(Point position)
@@ -90,7 +90,7 @@ namespace Quoridor
                 if (Position != DefaultPosition)
                 {
                     IsPlaced = true;
-                    placedCallback?.Invoke(this);
+                    PlacedCallback?.Invoke(this);
                     PrimaryBrush = HoverBrush;
                 }
             }

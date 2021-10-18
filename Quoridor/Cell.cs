@@ -14,7 +14,7 @@ namespace Quoridor
 
         public Action<Cell> PressCallback { get; set; }
 
-        private List<Cell> Neighbours { get; } = new List<Cell>();
+        public List<Cell> Neighbours { get; private set; } = new List<Cell>();
         public bool IsTaken { get; set; }
 
         private Brush PrimaryBrush { get; } = Brushes.BurlyWood;

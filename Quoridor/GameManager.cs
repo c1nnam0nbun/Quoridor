@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -25,6 +26,8 @@ namespace Quoridor
         private static Player ActivePlayer { get; set; }
 
         private static int TurnCount { get; set; }
+
+        private static Point[] NeigboursRemovedCurrentTurn = new Point[4];
 
         public static void Init(Form window)
         {
@@ -138,6 +141,7 @@ namespace Quoridor
                     GameReset();
                     return;
                 }
+
                 TurnCount++;
             }
         }
@@ -203,64 +207,129 @@ namespace Quoridor
 
         private static void OnWallPlaced(Wall wall)
         {
-            if (ActivePlayer != null && ActivePlayer.Walls.Contains(wall)) TurnCount++;
             if (wall.IsHorizontal())
             {
-                void BanPointsH()
+                TryRemoveNeighboursHorizontal(wall);
+                if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
-                    for (int i = 0; i < 9; i++)
-                    {
-                        for (int j = 0; j < 9; j++)
-                        {
-                            Point p = anchorPoints[i, j];
-                            if (p != wall.Position) continue;
-                            if (!BannedPointsH.Contains(anchorPoints[i, j])) BannedPointsH.Add(anchorPoints[i, j]);
-                            if (!BannedPointsH.Contains(anchorPoints[i + 1, j]))
-                                BannedPointsH.Add(anchorPoints[i + 1, j]);
-                            if (i != 0 && !BannedPointsH.Contains(anchorPoints[i - 1, j]))
-                                BannedPointsH.Add(anchorPoints[i - 1, j]);
-                            if (!BannedPointsV.Contains(anchorPoints[i + 1, j - 1]))
-                                BannedPointsV.Add(anchorPoints[i + 1, j - 1]);
-
-                            cells[i + 1, j].RemoveNeighbour(cells[i + 1, j - 1]);
-                            cells[i + 1, j - 1].RemoveNeighbour(cells[i + 1, j]);
-                            cells[i + 2, j].RemoveNeighbour(cells[i + 2, j - 1]);
-                            cells[i + 2, j - 1].RemoveNeighbour(cells[i + 2, j]);
-                            return;
-                        }
-                    }
+                    TurnCount++;
+                    BanPointsHorizontal(wall);
                 }
-
-                BanPointsH();
+                else
+                {
+                    RestoreNeighbours();
+                    wall.Reset();
+                }
             }
             else
             {
-                void BanPointsV()
+                TryRemoveNeighboursVertical(wall);
+                if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
-                    for (int i = 0; i < 9; i++)
-                    {
-                        for (int j = 0; j < 9; j++)
-                        {
-                            Point p = anchorPoints[i, j];
-                            if (p != wall.Position) continue;
-                            if (!BannedPointsV.Contains(anchorPoints[i, j])) BannedPointsV.Add(anchorPoints[i, j]);
-                            if (!BannedPointsV.Contains(anchorPoints[i, j + 1]))
-                                BannedPointsV.Add(anchorPoints[i, j + 1]);
-                            if (j != 0 && !BannedPointsV.Contains(anchorPoints[i, j - 1]))
-                                BannedPointsV.Add(anchorPoints[i, j - 1]);
-                            if (!BannedPointsH.Contains(anchorPoints[i - 1, j + 1]))
-                                BannedPointsH.Add(anchorPoints[i - 1, j + 1]);
-
-                            cells[i, j].RemoveNeighbour(cells[i + 1, j]);
-                            cells[i + 1, j].RemoveNeighbour(cells[i, j]);
-                            cells[i, j + 1].RemoveNeighbour(cells[i + 1, j + 1]);
-                            cells[i + 1, j + 1].RemoveNeighbour(cells[i, j + 1]);
-                            return;
-                        }
-                    }
+                    TurnCount++;
+                    BanPointsVertical(wall);
                 }
+                else
+                {
+                    RestoreNeighbours();
+                    wall.Reset();
+                }
+            }
+        }
 
-                BanPointsV();
+        private static void RestoreNeighbours()
+        {
+            cells[NeigboursRemovedCurrentTurn[0].X, NeigboursRemovedCurrentTurn[0].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[1].X, NeigboursRemovedCurrentTurn[1].Y]);
+            cells[NeigboursRemovedCurrentTurn[1].X, NeigboursRemovedCurrentTurn[1].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[0].X, NeigboursRemovedCurrentTurn[0].Y]);
+            cells[NeigboursRemovedCurrentTurn[2].X, NeigboursRemovedCurrentTurn[2].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[3].X, NeigboursRemovedCurrentTurn[3].Y]);
+            cells[NeigboursRemovedCurrentTurn[3].X, NeigboursRemovedCurrentTurn[3].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[2].X, NeigboursRemovedCurrentTurn[2].Y]);
+        }
+
+        private static void TryRemoveNeighboursHorizontal(Wall wall)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Point p = anchorPoints[i, j];
+                    if (p != wall.Position) continue;
+
+                    NeigboursRemovedCurrentTurn[0] = new Point(i + 1, j);
+                    NeigboursRemovedCurrentTurn[1] = new Point(i + 1, j - 1);
+                    NeigboursRemovedCurrentTurn[2] = new Point(i + 2, j);
+                    NeigboursRemovedCurrentTurn[3] = new Point(i + 2, j - 1);
+
+                    cells[i + 1, j].RemoveNeighbour(cells[i + 1, j - 1]);
+                    cells[i + 1, j - 1].RemoveNeighbour(cells[i + 1, j]);
+                    cells[i + 2, j].RemoveNeighbour(cells[i + 2, j - 1]);
+                    cells[i + 2, j - 1].RemoveNeighbour(cells[i + 2, j]);
+                    return;
+                }
+            }
+        }
+        
+        private static void TryRemoveNeighboursVertical(Wall wall)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Point p = anchorPoints[i, j];
+                    if (p != wall.Position) continue;
+                    
+                    NeigboursRemovedCurrentTurn[0] = new Point(i, j);
+                    NeigboursRemovedCurrentTurn[1] = new Point(i + 1, j);
+                    NeigboursRemovedCurrentTurn[2] = new Point(i, j + 1);
+                    NeigboursRemovedCurrentTurn[3] = new Point(i + 1, j + 1);
+
+                    cells[i, j].RemoveNeighbour(cells[i + 1, j]);
+                    cells[i + 1, j].RemoveNeighbour(cells[i, j]);
+                    cells[i, j + 1].RemoveNeighbour(cells[i + 1, j + 1]);
+                    cells[i + 1, j + 1].RemoveNeighbour(cells[i, j + 1]);
+                    return;
+                }
+            }
+        }
+        
+        private static void BanPointsHorizontal(Wall wall)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Point p = anchorPoints[i, j];
+                    if (p != wall.Position) continue;
+                    if (!BannedPointsH.Contains(anchorPoints[i, j])) BannedPointsH.Add(anchorPoints[i, j]);
+                    if (!BannedPointsH.Contains(anchorPoints[i + 1, j]))
+                        BannedPointsH.Add(anchorPoints[i + 1, j]);
+                    if (i != 0 && !BannedPointsH.Contains(anchorPoints[i - 1, j]))
+                        BannedPointsH.Add(anchorPoints[i - 1, j]);
+                    if (!BannedPointsV.Contains(anchorPoints[i + 1, j - 1]))
+                        BannedPointsV.Add(anchorPoints[i + 1, j - 1]);
+                            
+                    return;
+                }
+            }
+        }
+
+        private static void BanPointsVertical(Wall wall)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Point p = anchorPoints[i, j];
+                    if (p != wall.Position) continue;
+                    if (!BannedPointsV.Contains(anchorPoints[i, j])) BannedPointsV.Add(anchorPoints[i, j]);
+                    if (!BannedPointsV.Contains(anchorPoints[i, j + 1]))
+                        BannedPointsV.Add(anchorPoints[i, j + 1]);
+                    if (j != 0 && !BannedPointsV.Contains(anchorPoints[i, j - 1]))
+                        BannedPointsV.Add(anchorPoints[i, j - 1]);
+                    if (!BannedPointsH.Contains(anchorPoints[i - 1, j + 1]))
+                        BannedPointsH.Add(anchorPoints[i - 1, j + 1]);
+
+                    return;
+                }
             }
         }
         
