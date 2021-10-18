@@ -17,7 +17,6 @@ namespace Quoridor
         private void OnPaint(object sender, PaintEventArgs e)
         {
             GameManager.GameDraw(e.Graphics);
-            GameManager.GameStart(e.Graphics);
         }
         
         private void OnGameTimerTick(object sender, ElapsedEventArgs e)

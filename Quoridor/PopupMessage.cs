@@ -6,24 +6,41 @@ namespace Quoridor
 {
     public class PopupMessage
     {
-        private string Text { get; }
-        private Point Position { get; }
-        private Size Size { get; }
-        private Action OkCallback { get; }
-
-        public PopupMessage(Point position, Size size, String text, Action okCallback)
+        public static void ShowChooseModeMessage(Point position, Size size, Action vsPlayerCallback, Action vsComputerCallback, Graphics g)
         {
-            this.Text = text;
-            this.Position = position;
-            this.Size = size;
-            this.OkCallback = okCallback;
+            g.FillRectangle(Brushes.Chocolate, position.X, position.Y, size.Width, size.Height);
+            g.DrawString("Choose mode", new Font(FontFamily.GenericMonospace, 20), Brushes.Black, position.X + 50, position.Y);
+            
+            Point p = new Point(position.X + 10, position.Y + size.Height - 110);
+            Size s = new Size(size.Width - 20, 40);
+            g.FillRectangle(Brushes.Peru, p.X, p.Y, s.Width, s.Height);
+            g.DrawString("Player vs Player", new Font(FontFamily.GenericMonospace, 18), Brushes.Black, p.X , p.Y + 5);
+
+            if (Input.MousePosition.X > p.X && Input.MousePosition.Y > p.Y &&
+                Input.MousePosition.X < p.X + s.Width && Input.MousePosition.Y < p.Y + s.Height &&
+                Input.IsMouseButtonDown(MouseButtons.Left))
+            {
+                vsPlayerCallback();
+            }
+            
+            p = new Point(position.X + 10, position.Y + size.Height - 60);
+            s = new Size(size.Width - 20, 40);
+            g.FillRectangle(Brushes.Peru, p.X, p.Y, s.Width, s.Height);
+            g.DrawString("Player vs Computer", new Font(FontFamily.GenericMonospace, 18), Brushes.Black, p.X , p.Y + 5);
+
+            if (Input.MousePosition.X > p.X && Input.MousePosition.Y > p.Y &&
+                Input.MousePosition.X < p.X + s.Width && Input.MousePosition.Y < p.Y + s.Height &&
+                Input.IsMouseButtonDown(MouseButtons.Left))
+            {
+                vsComputerCallback();
+            }
         }
 
-        public void Show(Graphics g)
+        public static void ShowBeginGameMessage(Point position, Size size, Action okCallback, Graphics g)
         {
-            g.FillRectangle(Brushes.Chocolate, Position.X, Position.Y, Size.Width, Size.Height);
-            g.DrawString(Text, new Font(FontFamily.GenericMonospace, 20), Brushes.Black, Position.X, Position.Y);
-            Point p = new Point(Position.X + Size.Width / 2 - 40, Position.Y + Size.Height - 40);
+            g.FillRectangle(Brushes.Chocolate, position.X, position.Y, size.Width, size.Height);
+            g.DrawString("Place your player", new Font(FontFamily.GenericMonospace, 20), Brushes.Black, position.X, position.Y);
+            Point p = new Point(position.X + size.Width / 2 - 40, position.Y + size.Height - 40);
             Size s = new Size(80, 30);
             g.FillRectangle(Brushes.Peru, p.X, p.Y, s.Width, s.Height);
 
@@ -31,7 +48,7 @@ namespace Quoridor
                 Input.MousePosition.X < p.X + s.Width && Input.MousePosition.Y < p.Y + s.Height &&
                 Input.IsMouseButtonDown(MouseButtons.Left))
             {
-                OkCallback();
+                okCallback();
             }
         }
     }

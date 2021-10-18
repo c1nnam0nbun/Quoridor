@@ -9,86 +9,46 @@ namespace Quoridor
 {
     public static class GameManager
     {
-        private static Form Window { get; set; }
-        private static bool IsGameStarted { get; set; }
+        public static Form Window { get; private set; }
+        
+        public static GameState GameState { get; set; } = new GameStartedState();
+        public static TurnState TurnState { get; set; }
+        
 
         private static Board Board { get; set; }
 
-        private static Cell[,] cells = new Cell[11, 9];
-        private static Wall[,] walls = new Wall[2, 10];
-        private static Point[,] anchorPoints = new Point[9, 9];
+        private static Cell[,] _cells = new Cell[11, 9];
+        private static Wall[,] _walls = new Wall[2, 10];
+        private static Point[,] _anchorPoints = new Point[9, 9];
 
         private static List<Point> BannedPointsV { get; } = new List<Point>();
         private static List<Point> BannedPointsH { get; } = new List<Point>();
 
-        private static Player PlayerOne { get; set; }
-        private static Player PlayerTwo { get; set; }
-        private static Player ActivePlayer { get; set; }
+        public static Player PlayerOne { get; private set; }
+        public static Player PlayerTwo { get; private set; }
 
-        private static int TurnCount { get; set; }
-
-        private static Point[] NeigboursRemovedCurrentTurn = new Point[4];
+        private static readonly Point[] NeighboursRemovedCurrentTurn = new Point[4];
 
         public static void Init(Form window)
         {
             Window = window;
             Board = new Board(window.ClientSize);
         }
-
-        public static void GameStart(Graphics g)
-        {
-            if (IsGameStarted) return;
-            Size s = new Size(300, 100);
-            Point p = new Point(Window.Size.Width / 2 - s.Width / 2, Window.Size.Height / 2 - s.Height / 2);
-            PopupMessage msg = new PopupMessage(p, s, "Place your players", () => IsGameStarted = true);
-            msg.Show(g);
-        }
-
+        
         public static void GameUpdate()
         {
-            if (!IsGameStarted) return;
+            GameState.Update();
+            TurnState?.Update();
+            
             if (Input.IsKeyDown(Keys.F5))
             {
                 GameReset();
                 return;
             }
             
-            ChangeTurn();
-
-            for (int i = 0; i < 11; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    Cell cell = cells[i, j];
-                    if (!cell.IsPlayable) break;
-                    if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
-                    {
-                        if (PlayerOne == null)
-                        {
-                            if (i <= 1)
-                            {
-                                PlayerOne = new Player(cell, Brushes.DarkRed);
-                                for (int k = 0; k < 10; k++) PlayerOne.Walls[k] = walls[0, k];
-                            }
-                        }
-
-                        if (PlayerTwo == null)
-                        {
-                            if (i >= 9)
-                            {
-                                PlayerTwo = new Player(cell, Brushes.Navy);
-                                for (int k = 0; k < 10; k++) PlayerTwo.Walls[k] = walls[1, k];
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (PlayerOne == null || PlayerTwo == null || ActivePlayer == null) return;
-            foreach (Cell cell in cells) cell.Update();
-            if (PlayerOne == null || PlayerTwo == null || ActivePlayer == null) return;
+            foreach (Cell cell in _cells) cell.Update();
+            if (PlayerOne == null || PlayerTwo == null) return;
             
-            foreach (Wall wall in ActivePlayer.Walls) wall.Update();
             if (Wall.ActiveWall == null) return;
             if (Wall.ActiveWall.IsHorizontal())
             {
@@ -108,27 +68,62 @@ namespace Quoridor
             }
         }
 
+        public static void PlacePlayerTwo()
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Cell cell = _cells[i, j];
+                    if (!cell.IsPlayable) break;
+                    if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
+                    {
+                        if (i >= 9)
+                        {
+                            PlayerTwo = new Player(cell, Brushes.Navy);
+                            for (int k = 0; k < 10; k++) PlayerTwo.Walls[k] = _walls[1, k];
+                            TurnState.ChangeTurn();
+                        }
+                    }
+                }
+            }
+        }
+        
+        public static void PlacePlayerOne()
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Cell cell = _cells[i, j];
+                    if (!cell.IsPlayable) break;
+                    if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
+                    {
+                        if (i <= 1)
+                        {
+                            PlayerOne = new Player(cell, Brushes.DarkRed);
+                            for (int k = 0; k < 10; k++) PlayerOne.Walls[k] = _walls[0, k];
+                            TurnState.ChangeTurn();
+                        }
+                    }
+                }
+            }
+        }
+
         private static void GameReset()
         {
             PlayerOne = null;
             PlayerTwo = null;
-            foreach (Wall wall in walls) wall.Reset();
-            TurnCount = 0;
-            ActivePlayer = null;
+            foreach (Wall wall in _walls) wall.Reset();
             BannedPointsH.Clear();
             BannedPointsV.Clear();
-            IsGameStarted = false;
-        }
-        
-        private static void ChangeTurn()
-        {
-            ActivePlayer = TurnCount % 2 == 0 ? PlayerOne : PlayerTwo;
+            GameState = new GameStartedState();
+            TurnState = null;
         }
 
         private static void OnCellPressed(Cell cell)
         {
-            if (ActivePlayer == null) return;
-            if (Wall.ActiveWall == null && ActivePlayer.Move(cell))
+            if (Wall.ActiveWall == null && (TurnState?.MovePlayer(cell) ?? false))
             {
                 if (PlayerOne.CurrentCell.Index.X == 9)
                 {
@@ -142,13 +137,14 @@ namespace Quoridor
                     return;
                 }
 
-                TurnCount++;
+                TurnState.ChangeTurn();
             }
         }
 
         public static void GameDraw(Graphics g)
         {
             Board.Draw(g);
+            GameState?.Draw(g);
             PlayerOne?.Draw(g);
             PlayerTwo?.Draw(g);
         }
@@ -159,9 +155,9 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    if (i == 0 || i == 10) cells[i, j] = new Cell(new Point(i, j), false);
-                    else cells[i, j] = new Cell(new Point(i, j));
-                    cells[i, j].PressCallback = OnCellPressed;
+                    if (i == 0 || i == 10) _cells[i, j] = new Cell(new Point(i, j), false);
+                    else _cells[i, j] = new Cell(new Point(i, j));
+                    _cells[i, j].PressCallback = GameState.OnCellPressed;
                 }
             }
 
@@ -169,26 +165,31 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    Cell cell = cells[i, j];
-                    if (i > 0) cell.AddNeighbour(cells[i - 1, j]);
-                    if (i < 10) cell.AddNeighbour(cells[i + 1, j]);
-                    if (j > 0) cell.AddNeighbour(cells[i, j - 1]);
-                    if (j < 8) cell.AddNeighbour(cells[i, j + 1]);
+                    Cell cell = _cells[i, j];
+                    if (i > 0) cell.AddNeighbour(_cells[i - 1, j]);
+                    if (i < 10) cell.AddNeighbour(_cells[i + 1, j]);
+                    if (j > 0) cell.AddNeighbour(_cells[i, j - 1]);
+                    if (j < 8) cell.AddNeighbour(_cells[i, j + 1]);
                 }
             }
 
-            return ref cells;
+            return ref _cells;
+        }
+
+        public static void UpdateCellCallback()
+        {
+            foreach (Cell cell in _cells) cell.PressCallback = GameState.OnCellPressed;
         }
 
         public static ref Wall[,] CreateWalls()
         {
             for (int i = 0; i < 10; i++)
             {
-                walls[0, i] = new Wall(OnWallPlaced);
-                walls[1, i] = new Wall(OnWallPlaced);
+                _walls[0, i] = new Wall(OnWallPlaced);
+                _walls[1, i] = new Wall(OnWallPlaced);
             }
 
-            return ref walls;
+            return ref _walls;
         }
 
         public static ref Point[,] CreateAnchorPoints(Cell[,] boardCells)
@@ -198,11 +199,11 @@ namespace Quoridor
                 for (int j = 0; j < 9; j++)
                 {
                     Cell c = boardCells[i, j];
-                    anchorPoints[i, j] = new Point(c.Position.X + c.Size.Width, c.Position.Y - 10);
+                    _anchorPoints[i, j] = new Point(c.Position.X + c.Size.Width, c.Position.Y - 10);
                 }
             }
 
-            return ref anchorPoints;
+            return ref _anchorPoints;
         }
 
         private static void OnWallPlaced(Wall wall)
@@ -212,8 +213,8 @@ namespace Quoridor
                 TryRemoveNeighboursHorizontal(wall);
                 if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
-                    TurnCount++;
                     BanPointsHorizontal(wall);
+                    TurnState.ChangeTurn();
                 }
                 else
                 {
@@ -226,8 +227,8 @@ namespace Quoridor
                 TryRemoveNeighboursVertical(wall);
                 if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
-                    TurnCount++;
                     BanPointsVertical(wall);
+                    TurnState.ChangeTurn();
                 }
                 else
                 {
@@ -239,10 +240,10 @@ namespace Quoridor
 
         private static void RestoreNeighbours()
         {
-            cells[NeigboursRemovedCurrentTurn[0].X, NeigboursRemovedCurrentTurn[0].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[1].X, NeigboursRemovedCurrentTurn[1].Y]);
-            cells[NeigboursRemovedCurrentTurn[1].X, NeigboursRemovedCurrentTurn[1].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[0].X, NeigboursRemovedCurrentTurn[0].Y]);
-            cells[NeigboursRemovedCurrentTurn[2].X, NeigboursRemovedCurrentTurn[2].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[3].X, NeigboursRemovedCurrentTurn[3].Y]);
-            cells[NeigboursRemovedCurrentTurn[3].X, NeigboursRemovedCurrentTurn[3].Y].AddNeighbour(cells[NeigboursRemovedCurrentTurn[2].X, NeigboursRemovedCurrentTurn[2].Y]);
+            _cells[NeighboursRemovedCurrentTurn[0].X, NeighboursRemovedCurrentTurn[0].Y].AddNeighbour(_cells[NeighboursRemovedCurrentTurn[1].X, NeighboursRemovedCurrentTurn[1].Y]);
+            _cells[NeighboursRemovedCurrentTurn[1].X, NeighboursRemovedCurrentTurn[1].Y].AddNeighbour(_cells[NeighboursRemovedCurrentTurn[0].X, NeighboursRemovedCurrentTurn[0].Y]);
+            _cells[NeighboursRemovedCurrentTurn[2].X, NeighboursRemovedCurrentTurn[2].Y].AddNeighbour(_cells[NeighboursRemovedCurrentTurn[3].X, NeighboursRemovedCurrentTurn[3].Y]);
+            _cells[NeighboursRemovedCurrentTurn[3].X, NeighboursRemovedCurrentTurn[3].Y].AddNeighbour(_cells[NeighboursRemovedCurrentTurn[2].X, NeighboursRemovedCurrentTurn[2].Y]);
         }
 
         private static void TryRemoveNeighboursHorizontal(Wall wall)
@@ -251,18 +252,18 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (p != wall.Position) continue;
 
-                    NeigboursRemovedCurrentTurn[0] = new Point(i + 1, j);
-                    NeigboursRemovedCurrentTurn[1] = new Point(i + 1, j - 1);
-                    NeigboursRemovedCurrentTurn[2] = new Point(i + 2, j);
-                    NeigboursRemovedCurrentTurn[3] = new Point(i + 2, j - 1);
+                    NeighboursRemovedCurrentTurn[0] = new Point(i + 1, j);
+                    NeighboursRemovedCurrentTurn[1] = new Point(i + 1, j - 1);
+                    NeighboursRemovedCurrentTurn[2] = new Point(i + 2, j);
+                    NeighboursRemovedCurrentTurn[3] = new Point(i + 2, j - 1);
 
-                    cells[i + 1, j].RemoveNeighbour(cells[i + 1, j - 1]);
-                    cells[i + 1, j - 1].RemoveNeighbour(cells[i + 1, j]);
-                    cells[i + 2, j].RemoveNeighbour(cells[i + 2, j - 1]);
-                    cells[i + 2, j - 1].RemoveNeighbour(cells[i + 2, j]);
+                    _cells[i + 1, j].RemoveNeighbour(_cells[i + 1, j - 1]);
+                    _cells[i + 1, j - 1].RemoveNeighbour(_cells[i + 1, j]);
+                    _cells[i + 2, j].RemoveNeighbour(_cells[i + 2, j - 1]);
+                    _cells[i + 2, j - 1].RemoveNeighbour(_cells[i + 2, j]);
                     return;
                 }
             }
@@ -274,18 +275,18 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (p != wall.Position) continue;
                     
-                    NeigboursRemovedCurrentTurn[0] = new Point(i, j);
-                    NeigboursRemovedCurrentTurn[1] = new Point(i + 1, j);
-                    NeigboursRemovedCurrentTurn[2] = new Point(i, j + 1);
-                    NeigboursRemovedCurrentTurn[3] = new Point(i + 1, j + 1);
+                    NeighboursRemovedCurrentTurn[0] = new Point(i, j);
+                    NeighboursRemovedCurrentTurn[1] = new Point(i + 1, j);
+                    NeighboursRemovedCurrentTurn[2] = new Point(i, j + 1);
+                    NeighboursRemovedCurrentTurn[3] = new Point(i + 1, j + 1);
 
-                    cells[i, j].RemoveNeighbour(cells[i + 1, j]);
-                    cells[i + 1, j].RemoveNeighbour(cells[i, j]);
-                    cells[i, j + 1].RemoveNeighbour(cells[i + 1, j + 1]);
-                    cells[i + 1, j + 1].RemoveNeighbour(cells[i, j + 1]);
+                    _cells[i, j].RemoveNeighbour(_cells[i + 1, j]);
+                    _cells[i + 1, j].RemoveNeighbour(_cells[i, j]);
+                    _cells[i, j + 1].RemoveNeighbour(_cells[i + 1, j + 1]);
+                    _cells[i + 1, j + 1].RemoveNeighbour(_cells[i, j + 1]);
                     return;
                 }
             }
@@ -297,15 +298,15 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (p != wall.Position) continue;
-                    if (!BannedPointsH.Contains(anchorPoints[i, j])) BannedPointsH.Add(anchorPoints[i, j]);
-                    if (!BannedPointsH.Contains(anchorPoints[i + 1, j]))
-                        BannedPointsH.Add(anchorPoints[i + 1, j]);
-                    if (i != 0 && !BannedPointsH.Contains(anchorPoints[i - 1, j]))
-                        BannedPointsH.Add(anchorPoints[i - 1, j]);
-                    if (!BannedPointsV.Contains(anchorPoints[i + 1, j - 1]))
-                        BannedPointsV.Add(anchorPoints[i + 1, j - 1]);
+                    if (!BannedPointsH.Contains(_anchorPoints[i, j])) BannedPointsH.Add(_anchorPoints[i, j]);
+                    if (!BannedPointsH.Contains(_anchorPoints[i + 1, j]))
+                        BannedPointsH.Add(_anchorPoints[i + 1, j]);
+                    if (i != 0 && !BannedPointsH.Contains(_anchorPoints[i - 1, j]))
+                        BannedPointsH.Add(_anchorPoints[i - 1, j]);
+                    if (!BannedPointsV.Contains(_anchorPoints[i + 1, j - 1]))
+                        BannedPointsV.Add(_anchorPoints[i + 1, j - 1]);
                             
                     return;
                 }
@@ -318,15 +319,15 @@ namespace Quoridor
             {
                 for (int j = 0; j < 9; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (p != wall.Position) continue;
-                    if (!BannedPointsV.Contains(anchorPoints[i, j])) BannedPointsV.Add(anchorPoints[i, j]);
-                    if (!BannedPointsV.Contains(anchorPoints[i, j + 1]))
-                        BannedPointsV.Add(anchorPoints[i, j + 1]);
-                    if (j != 0 && !BannedPointsV.Contains(anchorPoints[i, j - 1]))
-                        BannedPointsV.Add(anchorPoints[i, j - 1]);
-                    if (!BannedPointsH.Contains(anchorPoints[i - 1, j + 1]))
-                        BannedPointsH.Add(anchorPoints[i - 1, j + 1]);
+                    if (!BannedPointsV.Contains(_anchorPoints[i, j])) BannedPointsV.Add(_anchorPoints[i, j]);
+                    if (!BannedPointsV.Contains(_anchorPoints[i, j + 1]))
+                        BannedPointsV.Add(_anchorPoints[i, j + 1]);
+                    if (j != 0 && !BannedPointsV.Contains(_anchorPoints[i, j - 1]))
+                        BannedPointsV.Add(_anchorPoints[i, j - 1]);
+                    if (!BannedPointsH.Contains(_anchorPoints[i - 1, j + 1]))
+                        BannedPointsH.Add(_anchorPoints[i - 1, j + 1]);
 
                     return;
                 }
@@ -340,7 +341,7 @@ namespace Quoridor
             {
                 for (int j = 1; j < 9; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (DistSquared(Input.MousePosition, p) < DistSquared(Input.MousePosition, closest))
                         closest = p;
                 }
@@ -356,7 +357,7 @@ namespace Quoridor
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    Point p = anchorPoints[i, j];
+                    Point p = _anchorPoints[i, j];
                     if (DistSquared(Input.MousePosition, p) < DistSquared(Input.MousePosition, closest))
                         closest = p;
                 }

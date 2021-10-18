@@ -12,7 +12,7 @@ namespace Quoridor
         {
             CurrentCell = initialCell;
             CurrentCell.IsTaken = true;
-            this.Brush = brush;
+            Brush = brush;
         }
 
         public void Draw(Graphics g)
