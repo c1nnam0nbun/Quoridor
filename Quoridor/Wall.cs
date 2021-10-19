@@ -25,7 +25,7 @@ namespace Quoridor
         
         public Wall(Action<Wall> placedCallback)
         {
-            this.PlacedCallback = placedCallback;
+            PlacedCallback = placedCallback;
         }
 
         public void SetDefaultPosition(Point position)

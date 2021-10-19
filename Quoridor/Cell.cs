@@ -7,25 +7,17 @@ namespace Quoridor
 {
     public class Cell
     {
-        public bool IsPlayable { get; set; }
+        public bool IsPlayable { get; }
         public Point Position { get; set; }
         public Size Size { get; set; }
-        public Point Index { get; set; }
+        public Point Index { get; }
 
         public Action<Cell> PressCallback { get; set; }
-
-        public List<Cell> Neighbours { get; private set; } = new List<Cell>();
+        public List<Cell> Neighbours { get; } = new List<Cell>();
         public bool IsTaken { get; set; }
 
         private Brush PrimaryBrush { get; } = Brushes.BurlyWood;
         private Brush HoverBrush { get; } = Brushes.SandyBrown;
-
-        public Cell(int x, int y, int width, int height, bool isPlayable)
-        {
-            Position = new Point(x, y);
-            Size = new Size(width, height);
-            IsPlayable = isPlayable;
-        }
 
         public Cell(Point index, bool isPlayable = true)
         {
@@ -36,15 +28,10 @@ namespace Quoridor
         public void Update()
         {
             if (!IsPlayable) return;
-            if (ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
-            {
-                PressCallback?.Invoke(this);
-            }
-
-            //if (!Input.IsMouseButtonDown(MouseButtons.Left)) ShouldReceiveInput = true;
+            if (ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left)) PressCallback?.Invoke(this);
         }
 
-        public bool ContainsPoint(Point point)
+        private bool ContainsPoint(Point point)
         {
             return point.X > Position.X && point.Y > Position.Y && point.X < Position.X + Size.Width && point.Y < Position.Y + Size.Height;
         }

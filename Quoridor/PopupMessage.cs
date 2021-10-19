@@ -43,6 +43,7 @@ namespace Quoridor
             Point p = new Point(position.X + size.Width / 2 - 40, position.Y + size.Height - 40);
             Size s = new Size(80, 30);
             g.FillRectangle(Brushes.Peru, p.X, p.Y, s.Width, s.Height);
+            g.DrawString("OK", new Font(FontFamily.GenericMonospace, 18), Brushes.Black, p.X + 20 , p.Y + 3);
 
             if (Input.MousePosition.X > p.X && Input.MousePosition.Y > p.Y &&
                 Input.MousePosition.X < p.X + s.Width && Input.MousePosition.Y < p.Y + s.Height &&

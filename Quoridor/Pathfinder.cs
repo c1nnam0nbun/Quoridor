@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Quoridor
 {
-    public class Pathfinder
+    public static class Pathfinder
     {
         public static bool CheckIfPathExistsForLeftPlayer(Player player)
         {

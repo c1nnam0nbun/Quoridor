@@ -48,7 +48,7 @@
     <ItemGroup>
         <Compile Include="Board.cs" />
         <Compile Include="Cell.cs" />
-        <Compile Include="ComputerPlayer.cs" />
+        <Compile Include="RNG.cs" />
         <Compile Include="GameManager.cs" />
         <Compile Include="Input.cs" />
         <Compile Include="MainWindow.cs">
@@ -66,7 +66,7 @@
         <Compile Include="state\game_state\GameState.cs" />
         <Compile Include="state\game_state\VsComputerGameState.cs" />
         <Compile Include="state\game_state\VsPlayerGameState.cs" />
-        <Compile Include="state\State.cs" />
+        <Compile Include="state\IState.cs" />
         <Compile Include="state\turn_state\PlayerOneTurnState.cs" />
         <Compile Include="state\turn_state\PlayerTwoTurnState.cs" />
         <Compile Include="state\turn_state\TurnState.cs" />

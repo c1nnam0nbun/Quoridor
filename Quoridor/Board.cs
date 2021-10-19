@@ -12,7 +12,7 @@ namespace Quoridor
         private const int Width = 11;
         private const int Height = 9;
 
-        public Cell[,] Cells { get; }
+        private Cell[,] Cells { get; }
         private Wall[,] Walls { get; }
         private Point[,] AnchorPoints { get; }
 

@@ -1,6 +1,6 @@
 ﻿namespace Quoridor
 {
-    public interface State
+    public interface IState
     {
         void Update();
     }
