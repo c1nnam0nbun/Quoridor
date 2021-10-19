@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -28,6 +26,9 @@ namespace Quoridor
         public static Player PlayerTwo { get; private set; }
 
         private static readonly Point[] NeighboursRemovedCurrentTurn = new Point[4];
+        
+        public static Cell PressedCell { get; private set; }
+        public static Wall PlacedWall { get; private set; }
 
         public static void Init(Form window)
         {
@@ -40,13 +41,17 @@ namespace Quoridor
             GameState.Update();
             TurnState?.Update();
             
+            TurnState?.MakeMove();
+            
+            GameState.CheckWin();
+            
             if (Input.IsKeyDown(Keys.F5))
             {
                 GameReset();
                 return;
             }
             
-            foreach (Cell cell in _cells) cell.Update();
+            foreach (Cell cell in _cells) cell?.Update();
             if (PlayerOne == null || PlayerTwo == null) return;
             
             if (Wall.ActiveWall == null) return;
@@ -66,79 +71,59 @@ namespace Quoridor
                     Wall.ActiveWall.Position = point;
                 }
             }
+            
         }
 
-        public static void PlacePlayerTwo()
+        public static void PlacePlayerTwo(Cell cell)
         {
-            for (int i = 0; i < 11; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    Cell cell = _cells[i, j];
-                    if (!cell.IsPlayable) break;
-                    if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
-                    {
-                        if (i >= 9)
-                        {
-                            PlayerTwo = new Player(cell, Brushes.Navy);
-                            for (int k = 0; k < 10; k++) PlayerTwo.Walls[k] = _walls[1, k];
-                            TurnState.ChangeTurn();
-                        }
-                    }
-                }
-            }
+            PlayerTwo = new Player(cell, Brushes.Navy);
+            for (int k = 0; k < 10; k++) PlayerTwo.Walls[k] = _walls[1, k];
+            TurnState.ChangeTurn();
         }
         
-        public static void PlacePlayerOne()
+        public static void PlacePlayerOne(Cell cell)
         {
-            for (int i = 0; i < 11; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    Cell cell = _cells[i, j];
-                    if (!cell.IsPlayable) break;
-                    if (cell.ContainsPoint(Input.MousePosition) && Input.IsMouseButtonDown(MouseButtons.Left))
-                    {
-                        if (i <= 1)
-                        {
-                            PlayerOne = new Player(cell, Brushes.DarkRed);
-                            for (int k = 0; k < 10; k++) PlayerOne.Walls[k] = _walls[0, k];
-                            TurnState.ChangeTurn();
-                        }
-                    }
-                }
-            }
+            PlayerOne = new Player(cell, Brushes.DarkRed);
+            for (int k = 0; k < 10; k++) PlayerOne.Walls[k] = _walls[0, k];
+            TurnState.ChangeTurn();
         }
 
-        private static void GameReset()
+        public static void GameReset()
         {
             PlayerOne = null;
             PlayerTwo = null;
             foreach (Wall wall in _walls) wall.Reset();
+            for (int i = 0; i < 11; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    Cell cell = _cells[i, j];
+                    cell.IsTaken = false;
+                    if (i > 0 && !cell.HasNeighbour(_cells[i - 1, j])) cell.AddNeighbour(_cells[i - 1, j]);
+                    if (i < 10 && !cell.HasNeighbour(_cells[i + 1, j])) cell.AddNeighbour(_cells[i + 1, j]);
+                    if (j > 0 && !cell.HasNeighbour(_cells[i, j - 1])) cell.AddNeighbour(_cells[i, j - 1]);
+                    if (j < 8 && !cell.HasNeighbour(_cells[i, j + 1])) cell.AddNeighbour(_cells[i, j + 1]);
+                }
+            }
             BannedPointsH.Clear();
             BannedPointsV.Clear();
+            
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    if (i >= 8 || j <= 0) BannedPointsH.Add(_anchorPoints[i, j]);
+                    if (i <= 0 || j >= 8) BannedPointsV.Add(_anchorPoints[i, j]);
+                }
+            }
+            
             GameState = new GameStartedState();
             TurnState = null;
         }
 
         private static void OnCellPressed(Cell cell)
         {
-            if (Wall.ActiveWall == null && (TurnState?.MovePlayer(cell) ?? false))
-            {
-                if (PlayerOne.CurrentCell.Index.X == 9)
-                {
-                    GameReset();
-                    return;
-                }
-
-                if (PlayerTwo.CurrentCell.Index.X == 1)
-                {
-                    GameReset();
-                    return;
-                }
-
-                TurnState.ChangeTurn();
-            }
+            PressedCell = cell;
         }
 
         public static void GameDraw(Graphics g)
@@ -157,7 +142,7 @@ namespace Quoridor
                 {
                     if (i == 0 || i == 10) _cells[i, j] = new Cell(new Point(i, j), false);
                     else _cells[i, j] = new Cell(new Point(i, j));
-                    _cells[i, j].PressCallback = GameState.OnCellPressed;
+                    _cells[i, j].PressCallback = OnCellPressed;
                 }
             }
 
@@ -176,9 +161,9 @@ namespace Quoridor
             return ref _cells;
         }
 
-        public static void UpdateCellCallback()
+        public static Cell GetCellAt(int i, int j)
         {
-            foreach (Cell cell in _cells) cell.PressCallback = GameState.OnCellPressed;
+            return _cells[i, j];
         }
 
         public static ref Wall[,] CreateWalls()
@@ -200,13 +185,25 @@ namespace Quoridor
                 {
                     Cell c = boardCells[i, j];
                     _anchorPoints[i, j] = new Point(c.Position.X + c.Size.Width, c.Position.Y - 10);
+                    if (i >= 8 || j <= 0) BannedPointsH.Add(_anchorPoints[i, j]);
+                    if (i <= 0 || j >= 8) BannedPointsV.Add(_anchorPoints[i, j]);
                 }
             }
 
             return ref _anchorPoints;
         }
 
-        private static void OnWallPlaced(Wall wall)
+        public static List<Point> GetAvailablePointsHorizontal()
+        {
+            return _anchorPoints.Cast<Point>().Where(point => !BannedPointsH.Contains(point)).ToList();
+        }
+        
+        public static List<Point> GetAvailablePointsVertical()
+        {
+            return _anchorPoints.Cast<Point>().Where(point => !BannedPointsV.Contains(point)).ToList();
+        }
+
+        public static void OnWallPlaced(Wall wall)
         {
             if (wall.IsHorizontal())
             {
@@ -214,7 +211,8 @@ namespace Quoridor
                 if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
                     BanPointsHorizontal(wall);
-                    TurnState.ChangeTurn();
+                    PlacedWall = wall;
+                    //TurnState.ChangeTurn();
                 }
                 else
                 {
@@ -228,7 +226,8 @@ namespace Quoridor
                 if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
                 {
                     BanPointsVertical(wall);
-                    TurnState.ChangeTurn();
+                    PlacedWall = wall;
+                    //TurnState.ChangeTurn();
                 }
                 else
                 {

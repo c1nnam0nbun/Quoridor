@@ -11,14 +11,9 @@ namespace Quoridor
         {
         }
 
-        public static int GetDesiredCellIndex()
+        public static int GetDesiredIndex(int min, int max)
         {
-            return rng.Next(0, 8);
-        }
-
-        public new bool Move(Cell cell)
-        {
-            return false;
+            return rng.Next(min, max);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Quoridor
     {
         public Cell CurrentCell { get; private set; }
         private Brush Brush { get; }
-        public Wall[] Walls { get; } = new Wall[10];
+        public Wall[] Walls { get; set; } = new Wall[10];
 
         public Player(Cell initialCell, Brush brush)
         {
@@ -22,6 +22,7 @@ namespace Quoridor
 
         public bool Move(Cell cell)
         {
+            if (cell == null) return false;
             if (!CurrentCell.HasNeighbour(cell) || cell.IsTaken) return false;
             CurrentCell.IsTaken = false;
             cell.IsTaken = true;

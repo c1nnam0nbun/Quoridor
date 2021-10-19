@@ -8,6 +8,21 @@ namespace Quoridor
 
         public abstract void Draw(Graphics g);
 
-        public abstract void OnCellPressed(Cell cell);
+        public void CheckWin()
+        {
+            if (GameManager.PlayerOne?.CurrentCell.Index.X == 9 || GameManager.PlayerTwo?.CurrentCell.Index.X == 1)
+            {
+                GameManager.GameReset();
+            }
+        }
+
+        public abstract Cell RequestNextCellForPlayerOne();
+        public abstract Cell RequestNextCellForPlayerTwo();
+
+        public abstract Cell RequestInitialCellForPlayerOne();
+        public abstract Cell RequestInitialCellForPlayerTwo();
+
+        public abstract Wall RequestPlacedWallForPlayerOne();
+        public abstract Wall RequestPlacedWallForPlayerTwo();
     }
 }

@@ -6,6 +6,6 @@
 
         public abstract void ChangeTurn();
 
-        public abstract bool MovePlayer(Cell cell);
+        public abstract void MakeMove();
     }
 }

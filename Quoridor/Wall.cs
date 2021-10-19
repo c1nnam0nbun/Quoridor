@@ -22,16 +22,7 @@ namespace Quoridor
 
         private Brush PrimaryBrush { get; set; } = Brushes.DarkRed;
         private Brush HoverBrush { get; set; } = Brushes.Crimson;
-
-        /*public Wall(int x, int y, int width, int height)
-        {
-            Position = new Point(x, y);
-            Size = new Size(width, height);
-            defaultPosition = Position;
-            defaultSize = Size;
-            selectedSize = new Size(Size.Width + 30, Size.Height);
-        }*/
-
+        
         public Wall(Action<Wall> placedCallback)
         {
             this.PlacedCallback = placedCallback;
@@ -80,8 +71,7 @@ namespace Quoridor
                 {
                     if (!IsRotationLocked)
                     {
-                        SelectedSize = new Size(SelectedSize.Height, SelectedSize.Width);
-                        IsRotationLocked = true;
+                        Rotate();
                     }
                 }
             }
@@ -118,6 +108,20 @@ namespace Quoridor
             else
                 g.FillRectangle(ActiveWall == this ? HoverBrush : PrimaryBrush, Position.X, Position.Y, Size.Width,
                     Size.Height);
+        }
+
+        public void Rotate()
+        {
+            SelectedSize = new Size(SelectedSize.Height, SelectedSize.Width);
+            Select();
+            IsRotationLocked = true;
+        }
+
+        public void Select()
+        {
+            Size = SelectedSize;
+            IsSelected = true;
+            PrimaryBrush = HoverBrush;
         }
 
         public bool IsHorizontal()

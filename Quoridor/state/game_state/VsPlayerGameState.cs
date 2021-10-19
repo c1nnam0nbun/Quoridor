@@ -18,10 +18,34 @@ namespace Quoridor
             Point p = new Point(GameManager.Window.Size.Width / 2 - s.Width / 2, GameManager.Window.Size.Height / 2 - s.Height / 2);
             PopupMessage.ShowBeginGameMessage(p, s, () => IsOkClicked = true, g);
         }
-
-        public override void OnCellPressed(Cell cell)
+        public override Cell RequestNextCellForPlayerOne()
         {
-            
+            return GameManager.PressedCell;
+        }
+
+        public override Cell RequestNextCellForPlayerTwo()
+        {
+            return GameManager.PressedCell;
+        }
+
+        public override Cell RequestInitialCellForPlayerOne()
+        {
+            return GameManager.PressedCell;
+        }
+
+        public override Cell RequestInitialCellForPlayerTwo()
+        {
+            return GameManager.PressedCell;
+        }
+
+        public override Wall RequestPlacedWallForPlayerOne()
+        {
+            return GameManager.PlacedWall;
+        }
+
+        public override Wall RequestPlacedWallForPlayerTwo()
+        {
+            return GameManager.PlacedWall;
         }
     }
 }

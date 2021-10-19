@@ -16,17 +16,40 @@ namespace Quoridor
             PopupMessage.ShowChooseModeMessage(p, s, () =>
             {
                 GameManager.GameState = new VsPlayerGameState();
-                GameManager.UpdateCellCallback();
             }, () =>
             {
                 GameManager.GameState = new VsComputerGameState();
-                GameManager.UpdateCellCallback();
             }, g);
         }
 
-        public override void OnCellPressed(Cell cell)
+        public override Cell RequestNextCellForPlayerOne()
         {
-           
+            return null;
+        }
+
+        public override Cell RequestNextCellForPlayerTwo()
+        {
+            return null;
+        }
+
+        public override Cell RequestInitialCellForPlayerOne()
+        {
+            return null;
+        }
+
+        public override Cell RequestInitialCellForPlayerTwo()
+        {
+            return null;
+        }
+
+        public override Wall RequestPlacedWallForPlayerOne()
+        {
+            return null;
+        }
+
+        public override Wall RequestPlacedWallForPlayerTwo()
+        {
+            return null;
         }
     }
 }

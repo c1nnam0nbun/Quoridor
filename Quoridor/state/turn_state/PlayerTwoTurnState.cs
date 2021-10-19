@@ -1,10 +1,16 @@
-﻿namespace Quoridor
+﻿using System.Linq;
+
+namespace Quoridor
 {
     public class PlayerTwoTurnState : TurnState
     {
         public override void Update()
         {
-            if (GameManager.PlayerTwo == null) GameManager.PlacePlayerTwo();
+            if (GameManager.PlayerTwo == null) 
+            {
+                Cell cell = GameManager.GameState.RequestInitialCellForPlayerTwo();
+                if (cell?.Index.X == 9) GameManager.PlacePlayerTwo(cell);
+            }
             else
             {
                 foreach (Wall wall in GameManager.PlayerTwo.Walls) wall.Update();
@@ -16,9 +22,20 @@
             GameManager.TurnState = new PlayerOneTurnState();
         }
 
-        public override bool MovePlayer(Cell cell)
+        public override void MakeMove()
         {
-            return GameManager.PlayerTwo?.Move(cell) ?? false;
+            if (GameManager.PlayerTwo == null) return;
+            
+            if (Wall.ActiveWall == null && GameManager.PlayerTwo.Move(GameManager.GameState.RequestNextCellForPlayerTwo()))
+            {
+                ChangeTurn();
+                return;
+            }
+
+            Wall placed = GameManager.GameState.RequestPlacedWallForPlayerTwo();
+            if (!GameManager.PlayerTwo.Walls.Contains(placed)) return;
+            GameManager.PlayerTwo.Walls = GameManager.PlayerTwo.Walls.Where(wall => wall != placed).ToArray();
+            ChangeTurn();
         }
     }
 }
