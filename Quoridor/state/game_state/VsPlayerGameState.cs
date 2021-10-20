@@ -28,6 +28,12 @@ namespace Quoridor
         {
             return GameManager.PressedCell;
         }
+
+        public override void OnTurnChange(TurnState state = null)
+        {
+            
+        }
+
         public override Cell RequestNextCellForPlayerOne()
         {
             return GameManager.PressedCell;

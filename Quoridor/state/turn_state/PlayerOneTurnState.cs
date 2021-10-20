@@ -1,5 +1,6 @@
 ﻿
 using System.Linq;
+using System.Windows.Forms;
 
 namespace Quoridor
 {
@@ -21,22 +22,31 @@ namespace Quoridor
         public override void ChangeTurn()
         {
             GameManager.TurnState = new PlayerTwoTurnState();
+            GameManager.GameState.OnTurnChange(GameManager.TurnState);
         }
 
         public override void MakeMove()
         {
             if (GameManager.PlayerOne == null) return;
-            
-            if (Wall.ActiveWall == null && GameManager.PlayerOne.Move(GameManager.GameState.RequestNextCellForPlayerOne()))
-            {
-                ChangeTurn();
-                return;
-            }
 
-            Wall placed = GameManager.GameState.RequestPlacedWallForPlayerOne();
-            if (!GameManager.PlayerOne.Walls.Contains(placed)) return;
-            GameManager.PlayerOne.Walls = GameManager.PlayerOne.Walls.Where(wall => wall != placed).ToArray();
-            ChangeTurn();
+            if (Input.IsMouseButtonUp(MouseButtons.Left))
+            {
+                Wall placed = GameManager.GameState.RequestPlacedWallForPlayerOne();
+                if (!GameManager.PlayerOne.Walls.Contains(placed))
+                {
+                    if (Wall.ActiveWall == null &&
+                        GameManager.PlayerOne.Move(GameManager.GameState.RequestNextCellForPlayerOne()))
+                    {
+                        ChangeTurn();
+                        Input.Flush();
+                    }
+                }
+                else
+                {
+                    GameManager.PlayerOne.Walls = GameManager.PlayerOne.Walls.Where(wall => wall != placed).ToArray();
+                    ChangeTurn();
+                }
+            }
         }
     }
 }

@@ -43,7 +43,7 @@ namespace Quoridor
 
         public void Update()
         {
-            if ((ActiveWall != null && ActiveWall != this) || IsPlaced) return;
+            if (ActiveWall != null && ActiveWall != this || IsPlaced) return;
 
             if (Input.IsMouseButtonDown(MouseButtons.Left) && ContainsPoint(Input.MousePosition))
             {
@@ -51,7 +51,7 @@ namespace Quoridor
                 ActiveWall = this;
             }
 
-            if (!Input.IsMouseButtonDown(MouseButtons.Left))
+            if (Input.IsMouseButtonUp(MouseButtons.Left))
             {
                 IsSelected = false;
                 ActiveWall = null;

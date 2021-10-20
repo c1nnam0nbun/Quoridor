@@ -1,9 +1,11 @@
 ﻿using System.Linq;
+using System.Windows.Forms;
 
 namespace Quoridor
 {
     public class PlayerTwoTurnState : TurnState
     {
+        
         public override void Update()
         {
             if (GameManager.PlayerTwo == null) 
@@ -26,16 +28,24 @@ namespace Quoridor
         {
             if (GameManager.PlayerTwo == null) return;
             
-            if (Wall.ActiveWall == null && GameManager.PlayerTwo.Move(GameManager.GameState.RequestNextCellForPlayerTwo()))
+            if (Input.IsMouseButtonUp(MouseButtons.Left) || ShouldIgnoreInput)
             {
-                ChangeTurn();
-                return;
+                Wall placed = GameManager.GameState.RequestPlacedWallForPlayerTwo();
+                if (!GameManager.PlayerTwo.Walls.Contains(placed))
+                {
+                    if (Wall.ActiveWall == null &&
+                        GameManager.PlayerTwo.Move(GameManager.GameState.RequestNextCellForPlayerTwo()))
+                    {
+                        ChangeTurn();
+                        Input.Flush();
+                    }
+                }
+                else
+                {
+                    GameManager.PlayerTwo.Walls = GameManager.PlayerTwo.Walls.Where(wall => wall != placed).ToArray();
+                    ChangeTurn();
+                }
             }
-
-            Wall placed = GameManager.GameState.RequestPlacedWallForPlayerTwo();
-            if (!GameManager.PlayerTwo.Walls.Contains(placed)) return;
-            GameManager.PlayerTwo.Walls = GameManager.PlayerTwo.Walls.Where(wall => wall != placed).ToArray();
-            ChangeTurn();
         }
     }
 }

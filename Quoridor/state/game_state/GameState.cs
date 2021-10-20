@@ -16,7 +16,10 @@ namespace Quoridor
             }
         }
 
-        public abstract Cell RequestNextCellForPlayerOne();
+        public abstract void OnTurnChange(TurnState state = null);
+
+        public abstract Cell RequestNextCellForPlayerOne(); 
+        
         public abstract Cell RequestNextCellForPlayerTwo();
 
         public abstract Cell RequestInitialCellForPlayerOne();

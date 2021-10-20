@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace Quoridor
 {
     public class VsComputerGameState : GameState
     {
         private bool IsOkClicked { get; set; }
+        
         public override void Update()
         {
             if (!IsOkClicked) return;
@@ -27,10 +29,15 @@ namespace Quoridor
 
         public override Cell RequestInitialCellForPlayerTwo()
         {
-            int idx = RNG.GetRandonIntInRange(0, 8);
+            int idx = Rng.GetRandomIntInRange(0, 8);
             return GameManager.GetCellAt(9, idx);
         }
-        
+
+        public override void OnTurnChange(TurnState state = null)
+        {
+            if (state != null) state.ShouldIgnoreInput = true;
+        }
+
         public override Cell RequestNextCellForPlayerOne()
         {
             return GameManager.PressedCell;
@@ -38,11 +45,10 @@ namespace Quoridor
 
         public override Cell RequestNextCellForPlayerTwo()
         {
-            if (RNG.GetRandonIntInRange(0, 100) > 70) return null;
             while (true)
             {
                 int count = GameManager.PlayerTwo.CurrentCell.Neighbours.Count;
-                int idx = RNG.GetRandonIntInRange(0, count);
+                int idx = Rng.GetRandomIntInRange(0, count);
                 Cell cell = GameManager.PlayerTwo.CurrentCell.Neighbours[idx];
                 if (!cell.IsPlayable) continue;
                 return GameManager.PlayerTwo.CurrentCell.Neighbours[idx];
@@ -56,12 +62,13 @@ namespace Quoridor
 
         public override Wall RequestPlacedWallForPlayerTwo()
         {
-            int idx = RNG.GetRandonIntInRange(0, GameManager.PlayerTwo.Walls.Length);
+            if (Rng.GetRandomIntInRange(0, 100) > 70) return null;
+            int idx = Rng.GetRandomIntInRange(0, GameManager.PlayerTwo.Walls.Length);
             if (GameManager.PlayerTwo.Walls.Length == 0) return null;
             Wall wall = GameManager.PlayerTwo.Walls[idx];
-            if (RNG.GetRandonIntInRange(0, 100) <= 50) wall.Rotate();
+            if (Rng.GetRandomIntInRange(0, 100) <= 50) wall.Rotate();
             List<Point> availablePoints = wall.IsHorizontal() ? GameManager.GetAvailablePointsHorizontal() : GameManager.GetAvailablePointsVertical();
-            idx = RNG.GetRandonIntInRange(0, availablePoints.Count);
+            idx = Rng.GetRandomIntInRange(0, availablePoints.Count);
             wall.Position = availablePoints[idx];
             wall.Select();
             GameManager.OnWallPlaced(wall);

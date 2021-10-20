@@ -3,12 +3,12 @@ using System.Drawing;
 
 namespace Quoridor
 {
-    public class RNG
+    public static class Rng
     {
-        private static Random rng = new Random();
-        public static int GetRandonIntInRange(int min, int max)
+        private static readonly Random _rng = new Random();
+        public static int GetRandomIntInRange(int min, int max)
         {
-            return rng.Next(min, max);
+            return _rng.Next(min, max);
         }
     }
 }

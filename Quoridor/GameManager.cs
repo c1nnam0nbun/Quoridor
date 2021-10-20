@@ -44,7 +44,7 @@ namespace Quoridor
             TurnState?.MakeMove();
             
             GameState.CheckWin();
-            
+
             if (Input.IsKeyDown(Keys.F5))
             {
                 GameReset();
@@ -53,25 +53,26 @@ namespace Quoridor
             
             foreach (Cell cell in _cells) cell?.Update();
             if (PlayerOne == null || PlayerTwo == null) return;
-            
-            if (Wall.ActiveWall == null) return;
-            if (Wall.ActiveWall.IsHorizontal())
+
+            if (Wall.ActiveWall != null)
             {
-                Point point = FindClosestHorizontal();
-                if (!BannedPointsH.Contains(point))
+                if (Wall.ActiveWall.IsHorizontal())
                 {
-                    Wall.ActiveWall.Position = point;
+                    Point point = FindClosestHorizontal();
+                    if (!BannedPointsH.Contains(point))
+                    {
+                        Wall.ActiveWall.Position = point;
+                    }
+                }
+                else
+                {
+                    Point point = FindClosestVertical();
+                    if (!BannedPointsV.Contains(point))
+                    {
+                        Wall.ActiveWall.Position = point;
+                    }
                 }
             }
-            else
-            {
-                Point point = FindClosestVertical();
-                if (!BannedPointsV.Contains(point))
-                {
-                    Wall.ActiveWall.Position = point;
-                }
-            }
-            
         }
 
         public static void PlacePlayerTwo(Cell cell)
@@ -116,6 +117,8 @@ namespace Quoridor
                     if (i <= 0 || j >= 8) BannedPointsV.Add(_anchorPoints[i, j]);
                 }
             }
+
+            PlacedWall = null;
             
             GameState = new GameStartedState();
             TurnState = null;

@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Linq;
 
 namespace Quoridor
 {
@@ -23,7 +24,44 @@ namespace Quoridor
         public bool Move(Cell cell)
         {
             if (cell == null) return false;
-            if (!CurrentCell.HasNeighbour(cell) || cell.IsTaken) return false;
+            if (!CurrentCell.HasNeighbour(cell)) return false;
+            if (cell.IsTaken)
+            {
+                if (CurrentCell.Index.X == cell.Index.X - 1)
+                {
+                    Cell curr = cell;
+                    Cell next = cell.Neighbours.Find(n => n.Index.X == curr.Index.X + 1);
+                    if (next == null || !next.IsPlayable) return false;
+                    cell = next;
+                }
+
+                else if (CurrentCell.Index.X == cell.Index.X + 1)
+                {
+                    Cell curr = cell;
+                    Cell next = cell.Neighbours.Find(n => n.Index.X == curr.Index.X - 1);
+                    if (next == null || !next.IsPlayable) return false;
+                    cell = next;
+                }
+
+                else if (CurrentCell.Index.Y == cell.Index.Y - 1)
+                {
+                    Cell curr = cell;
+                    Cell next = cell.Neighbours.Find(n => n.Index.Y == curr.Index.Y + 1);
+                    if (next == null || !next.IsPlayable) return false;
+                    cell = next;
+                }
+
+                else if (CurrentCell.Index.Y == cell.Index.Y + 1)
+                {
+                    Cell curr = cell;
+                    Cell next = cell.Neighbours.Find(n => n.Index.Y == curr.Index.Y - 1);
+                    if (next == null || !next.IsPlayable) return false;
+                    cell = next;
+                }
+                
+                else return false;
+            }
+            
             CurrentCell.IsTaken = false;
             cell.IsTaken = true;
             CurrentCell = cell;
