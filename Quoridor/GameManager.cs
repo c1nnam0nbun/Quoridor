@@ -211,7 +211,7 @@ namespace Quoridor
             if (wall.IsHorizontal())
             {
                 TryRemoveNeighboursHorizontal(wall);
-                if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
+                if (Pathfinder.FindPath(PlayerOne.CurrentCell, 9) && Pathfinder.FindPath(PlayerTwo.CurrentCell, 1))
                 {
                     BanPointsHorizontal(wall);
                     PlacedWall = wall;
@@ -226,7 +226,7 @@ namespace Quoridor
             else
             {
                 TryRemoveNeighboursVertical(wall);
-                if (Pathfinder.CheckIfPathExistsForLeftPlayer(PlayerOne) && Pathfinder.CheckIfPathExistsForRightPlayer(PlayerTwo))
+                if (Pathfinder.FindPath(PlayerOne.CurrentCell, 9) && Pathfinder.FindPath(PlayerTwo.CurrentCell, 1))
                 {
                     BanPointsVertical(wall);
                     PlacedWall = wall;
